@@ -1,0 +1,14 @@
+{
+  "name": "bpmnflow-link",
+  "version": "1.0.0",
+  "description": "Connects BPMN diagrams to real technological execution",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4",
+    "bpmn-moddle": "^8"
+  }
+}

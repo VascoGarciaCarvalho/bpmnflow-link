@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BPMNFlow Link</title>
+
+  <!-- bpmn-js viewer styles -->
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.11.1/dist/assets/diagram-js.css" />
+  <link rel="stylesheet" href="https://unpkg.com/bpmn-js@17.11.1/dist/assets/bpmn-font/css/bpmn-embedded.css" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>BPMNFlow Link</h1>
+    <p>Drag a <code>.bpmn</code> file to visualise and execute your process</p>
+  </header>
+
+  <main>
+    <!-- Left column: diagram viewer -->
+    <section class="diagram-section">
+      <div id="drop-zone">
+        <span id="drop-hint">Drop a .bpmn file here<br/>or click to select</span>
+        <input type="file" id="file-input" accept=".bpmn,.xml" />
+      </div>
+      <div id="canvas"></div>
+      <div class="diagram-actions">
+        <button id="btn-execute" disabled>Execute Process</button>
+        <button id="btn-fit" disabled>Fit to Screen</button>
+      </div>
+    </section>
+
+    <!-- Right column: tasks + results panel -->
+    <aside class="results-section">
+      <div class="panel">
+        <h2>Detected Tasks</h2>
+        <ul id="task-list"><li class="empty">Load a file to see tasks</li></ul>
+      </div>
+      <div class="panel">
+        <h2>Execution Results</h2>
+        <ul id="result-list"><li class="empty">Click "Execute Process" to run</li></ul>
+      </div>
+    </aside>
+  </main>
+
+  <!-- bpmn-js viewer (UMD bundle) -->
+  <script src="https://unpkg.com/bpmn-js@17.11.1/dist/bpmn-viewer.production.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

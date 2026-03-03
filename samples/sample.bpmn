@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_1"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <bpmn2:process id="Process_1" name="Sample Process" isExecutable="true">
+
+    <bpmn2:startEvent id="StartEvent_1" name="Start">
+      <bpmn2:outgoing>Flow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+
+    <bpmn2:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_Log" />
+
+    <bpmn2:serviceTask id="Task_Log" name="LogToConsole">
+      <bpmn2:documentation>{"message":"Processo iniciado"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_1</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_2" sourceRef="Task_Log" targetRef="Task_API" />
+
+    <bpmn2:serviceTask id="Task_API" name="CallAPI">
+      <bpmn2:documentation>{"url":"https://httpbin.org/get"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_2</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_3</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_3" sourceRef="Task_API" targetRef="Task_DB" />
+
+    <bpmn2:serviceTask id="Task_DB" name="UpdateDatabase">
+      <bpmn2:documentation>{"table":"logs","set":{"status":"done"},"where":{"id":"1"}}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_4</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_4" sourceRef="Task_DB" targetRef="EndEvent_1" />
+
+    <bpmn2:endEvent id="EndEvent_1" name="End">
+      <bpmn2:incoming>Flow_4</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+  </bpmn2:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="159" y="125" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_Log_di" bpmnElement="Task_Log">
+        <dc:Bounds x="240" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_API_di" bpmnElement="Task_API">
+        <dc:Bounds x="390" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_DB_di" bpmnElement="Task_DB">
+        <dc:Bounds x="540" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1">
+        <dc:Bounds x="692" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="700" y="125" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="100" />
+        <di:waypoint x="240" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="100" />
+        <di:waypoint x="390" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="490" y="100" />
+        <di:waypoint x="540" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="640" y="100" />
+        <di:waypoint x="692" y="100" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</bpmn2:definitions>
