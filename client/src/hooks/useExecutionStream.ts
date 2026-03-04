@@ -5,17 +5,25 @@ export function useExecutionStream() {
   const [events, setEvents] = useState<ExecutionEvent[]>([])
   const [running, setRunning] = useState(false)
 
-  async function start(xml: string) {
+  async function start(xml: string, inputVars: Record<string, unknown> = {}) {
     setRunning(true)
     setEvents([])
 
-    const res = await fetch('/api/execute-stream', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ xml }),
-    })
+    let res: Response
+    try {
+      res = await fetch('/api/execute-stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ xml, inputVars }),
+      })
+    } catch (e: any) {
+      setEvents([{ type: 'error', elementId: '', error: `Network error: ${e.message}` }])
+      setRunning(false)
+      return
+    }
 
-    if (!res.body) {
+    if (!res.ok || !res.body) {
+      setEvents([{ type: 'error', elementId: '', error: `Server error: ${res.status} ${res.statusText}` }])
       setRunning(false)
       return
     }
