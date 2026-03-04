@@ -100,7 +100,8 @@ export default function App() {
   const handleExecute = useCallback(async () => {
     if (!xml || running) return
     diagramRef.current?.clearHighlights()
-    await start(xml, inputVars)
+    const vars = varsRef.current?.getVars() ?? inputVars
+    await start(xml, vars)
   }, [xml, running, start, inputVars])
 
   return (
@@ -158,7 +159,7 @@ export default function App() {
         {/* Right — task list + variables + tabs */}
         <div className="right-panel">
           <TaskList tasks={tasks} />
-          <VariablesPanel onChange={setInputVars} />
+          <VariablesPanel ref={varsRef} onChange={setInputVars} />
 
           {/* Tab bar */}
           <div className="tab-bar">
