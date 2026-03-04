@@ -19,3 +19,22 @@ export interface TaskInfo {
   name: string
   type: string
 }
+
+export interface HistoryRun {
+  id: number
+  timestamp: string
+  processName: string
+  durationMs: number
+  taskCount: number
+  hadErrors: boolean
+}
+
+export interface HistoryRunDetail extends HistoryRun {
+  inputVars: Record<string, unknown>
+  results: Array<{
+    taskId: string
+    name: string
+    output: unknown
+    error: string | null
+  }>
+}

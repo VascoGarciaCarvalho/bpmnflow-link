@@ -1,0 +1,141 @@
+BPMNFlow Link — Technology Choices
+=====================================
+A simple explanation of every tool and library used in this project,
+where it is used, and why we chose it.
+
+
+─────────────────────────────────────────────────────────────────────────
+LANGUAGE & RUNTIME
+─────────────────────────────────────────────────────────────────────────
+
+Node.js
+  The program that runs our server on the computer.
+  We chose it because it handles multiple things at once well (like making
+  an API call while also writing to a database), and it is the most common
+  platform for JavaScript on the backend.
+
+TypeScript
+  JavaScript with the ability to declare what type of data a variable holds
+  (number, text, object, etc.).
+  We use it across the entire project so that mistakes like passing the wrong
+  kind of data to a function are caught before running the code, not after.
+
+ESM (ES Modules)
+  The modern way of splitting code into files that import from each other.
+  One of the libraries we depend on (bpmn-moddle) only works with this style,
+  so we adopted it everywhere to stay consistent.
+
+
+─────────────────────────────────────────────────────────────────────────
+BACKEND (THE SERVER)
+─────────────────────────────────────────────────────────────────────────
+
+Express
+  A small library that makes it easy to create a web server with routes
+  (URLs the browser can call).
+  We use it to expose three actions: parse a BPMN file, run a process, and
+  stream live updates while a process is running. It is the most popular
+  choice for this kind of lightweight server in Node.js.
+
+Server-Sent Events (SSE)
+  A way for the server to push messages to the browser in real time,
+  without the browser having to keep asking "are you done yet?".
+  We use it so the UI can highlight each BPMN task as it runs, giving the
+  user live feedback instead of waiting for everything to finish first.
+
+
+─────────────────────────────────────────────────────────────────────────
+READING BPMN FILES
+─────────────────────────────────────────────────────────────────────────
+
+bpmn-moddle
+  A library that reads a .bpmn file (which is XML) and turns it into
+  objects we can work with in code (tasks, gateways, arrows, etc.).
+  We use it on the server to understand the structure of the diagram before
+  executing it. Writing our own BPMN reader from scratch would be very risky
+  and time-consuming.
+
+bpmn-js (viewer)
+  A library that draws a BPMN diagram on screen inside the browser.
+  We use it in the frontend to show the diagram visually and to colour
+  each element as it runs (yellow while running, green when done, red on
+  error). We load it from the internet (CDN) instead of bundling it because
+  it is very large and loading it separately keeps our app fast.
+
+
+─────────────────────────────────────────────────────────────────────────
+EXECUTION ENGINE
+─────────────────────────────────────────────────────────────────────────
+
+Custom traversal (our own code)
+  The logic that walks through the diagram step by step, from the start
+  event to the end event, running each task along the way.
+  We wrote this ourselves because pulling in a full workflow engine would
+  be overkill — our needs are simple enough to handle in about 100 lines.
+
+ExecutionContext (our own code)
+  A simple memory that stores the output of each task while the process runs.
+  This lets a later task use the result of an earlier one. For example,
+  an API call result can be used as input to a database update.
+
+Interpolation (our own code)
+  A small piece of logic that replaces placeholders like {{ctx.TaskId.field}}
+  inside task configs with the actual values from the execution memory above.
+  It is how tasks communicate with each other through their configurations.
+
+Handler registry (our own code)
+  A list that connects task names (like "CallAPI" or "SendEmail") to the
+  code that actually does the work.
+  Adding a new task type only requires writing one new file and adding it
+  to the list — nothing else needs to change.
+
+
+─────────────────────────────────────────────────────────────────────────
+TASK HANDLERS (WHAT EACH TASK DOES)
+─────────────────────────────────────────────────────────────────────────
+
+node:sqlite (built into Node.js)
+  Used by the UpdateDatabase task to read and write a local database file.
+  We chose this because it comes built into Node.js — no installation needed,
+  no extra server to run, just a file on disk.
+
+Native fetch (built into Node.js)
+  Used by the CallAPI task to make HTTP requests to external services.
+  It is built into modern Node.js, so we did not need to install any
+  extra library just to make a web request.
+
+Nodemailer
+  Used by the SendEmail task to send emails through an SMTP server.
+  It is the most established library for sending email from Node.js and
+  works with virtually any email provider.
+
+
+─────────────────────────────────────────────────────────────────────────
+FRONTEND (THE USER INTERFACE)
+─────────────────────────────────────────────────────────────────────────
+
+React
+  A library for building user interfaces out of reusable pieces (components).
+  We use it because the UI has several independent parts — the diagram viewer,
+  the task list, the results panel — that each update on their own as events
+  arrive. React keeps them in sync without us having to manage that manually.
+
+Vite
+  The tool that bundles and serves the React app during development and
+  produces the final files for production.
+  It is very fast and requires almost no configuration to get started.
+
+
+─────────────────────────────────────────────────────────────────────────
+DEVELOPER TOOLS
+─────────────────────────────────────────────────────────────────────────
+
+tsx
+  Lets us run TypeScript files directly without a manual compile step.
+  Also watches for file changes and restarts the server automatically,
+  which speeds up development.
+
+concurrently
+  Runs the backend server and the frontend dev tool at the same time in
+  a single terminal window, with a single command (npm run dev).
+  Without it, you would need two separate terminal windows open.

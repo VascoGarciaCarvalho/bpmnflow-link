@@ -41,7 +41,13 @@ npm run dev
 
 Open **http://localhost:5173** in your browser.
 
-To test immediately, click **Load BPMN**, select `samples/sample.bpmn`, then click **Execute**.
+To test immediately, click **Load BPMN** and pick one of the included samples:
+
+| File | What it shows |
+|---|---|
+| `samples/sample.bpmn` | Simple linear flow — LogToConsole → CallAPI → UpdateDatabase |
+| `samples/order-processing.bpmn` | Order pipeline with a gateway — branches on whether the API call succeeded, uses context interpolation to pass data between tasks |
+| `samples/user-registration.bpmn` | Registration pipeline — verifies via API, saves user to database, sends a welcome email on success or logs the error on failure |
 
 ---
 
@@ -227,5 +233,7 @@ bpmnflow-link/
 │           └── useExecutionStream.ts
 │
 └── samples/
-    └── sample.bpmn            — Example process (LogToConsole → CallAPI → UpdateDatabase)
+    ├── sample.bpmn            — Simple process (LogToConsole → CallAPI → UpdateDatabase)
+    ├── order-processing.bpmn  — Gateway + context interpolation
+    └── user-registration.bpmn — Gateway + database + SendEmail
 ```

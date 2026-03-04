@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_1"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <bpmn2:process id="Process_1" name="User Registration Pipeline" isExecutable="true">
+
+    <!-- 1. Start -->
+    <bpmn2:startEvent id="StartEvent_1" name="Registration Received">
+      <bpmn2:outgoing>Flow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+
+    <bpmn2:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_LogStart" />
+
+    <!-- 2. Log that registration started -->
+    <bpmn2:serviceTask id="Task_LogStart" name="LogToConsole">
+      <bpmn2:documentation>{"message":"User registration pipeline started."}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_1</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_2" sourceRef="Task_LogStart" targetRef="Task_API" />
+
+    <!-- 3. Verify registration via external API -->
+    <bpmn2:serviceTask id="Task_API" name="CallAPI">
+      <bpmn2:documentation>{"url":"https://httpbin.org/get?user=newuser@example.com","method":"GET"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_2</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_3</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_3" sourceRef="Task_API" targetRef="Gateway_Check" />
+
+    <!-- 4. Gateway: did the verification succeed? -->
+    <bpmn2:exclusiveGateway id="Gateway_Check" name="Verified?" default="Flow_Fail">
+      <bpmn2:incoming>Flow_3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_Success</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_Fail</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+
+    <!-- Success branch -->
+    <bpmn2:sequenceFlow id="Flow_Success" sourceRef="Gateway_Check" targetRef="Task_DB">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">ctx.Task_API.status === 200</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+
+    <!-- 5. Save user to database -->
+    <bpmn2:serviceTask id="Task_DB" name="UpdateDatabase">
+      <bpmn2:documentation>{"table":"users","set":{"status":"active","verified_via":"{{ctx.Task_API.statusText}}"},"where":{"email":"newuser@example.com"}}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_Success</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_DB_Email</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_DB_Email" sourceRef="Task_DB" targetRef="Task_Email" />
+
+    <!-- 6. Send welcome email -->
+    <!-- Replace the SMTP fields below with your own credentials.         -->
+    <!-- smtpHost / smtpPort / smtpUser / smtpPass can also be omitted    -->
+    <!-- if you set SMTP_HOST / SMTP_PORT / SMTP_USER / SMTP_PASS as      -->
+    <!-- environment variables before starting the server.                -->
+    <bpmn2:serviceTask id="Task_Email" name="SendEmail">
+      <bpmn2:documentation>{"to":"newuser@example.com","from":"noreply@example.com","subject":"Welcome! Your account is ready","text":"Hi,\n\nYour registration has been verified and your account is now active.\n\nAPI check status: {{ctx.Task_API.statusText}}\n\nWelcome aboard!"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_DB_Email</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_Email_End</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_Email_End" sourceRef="Task_Email" targetRef="EndEvent_OK" />
+
+    <bpmn2:endEvent id="EndEvent_OK" name="User Registered">
+      <bpmn2:incoming>Flow_Email_End</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+    <!-- Failure branch (default) -->
+    <bpmn2:sequenceFlow id="Flow_Fail" sourceRef="Gateway_Check" targetRef="Task_LogFail" />
+
+    <!-- 7. Log the failure -->
+    <bpmn2:serviceTask id="Task_LogFail" name="LogToConsole">
+      <bpmn2:documentation>{"message":"Registration verification failed. API returned status: {{ctx.Task_API.status}}"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_Fail</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_Fail_End</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_Fail_End" sourceRef="Task_LogFail" targetRef="EndEvent_Fail" />
+
+    <bpmn2:endEvent id="EndEvent_Fail" name="Registration Rejected">
+      <bpmn2:incoming>Flow_Fail_End</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+  </bpmn2:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+
+      <!-- Start -->
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="125" y="125" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Log Start -->
+      <bpmndi:BPMNShape id="Task_LogStart_di" bpmnElement="Task_LogStart">
+        <dc:Bounds x="240" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Call API -->
+      <bpmndi:BPMNShape id="Task_API_di" bpmnElement="Task_API">
+        <dc:Bounds x="400" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Gateway -->
+      <bpmndi:BPMNShape id="Gateway_Check_di" bpmnElement="Gateway_Check" isMarkerVisible="true">
+        <dc:Bounds x="560" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="562" y="132" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Update Database -->
+      <bpmndi:BPMNShape id="Task_DB_di" bpmnElement="Task_DB">
+        <dc:Bounds x="670" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Send Email -->
+      <bpmndi:BPMNShape id="Task_Email_di" bpmnElement="Task_Email">
+        <dc:Bounds x="830" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- End OK -->
+      <bpmndi:BPMNShape id="EndEvent_OK_di" bpmnElement="EndEvent_OK">
+        <dc:Bounds x="990" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="970" y="125" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Log Fail -->
+      <bpmndi:BPMNShape id="Task_LogFail_di" bpmnElement="Task_LogFail">
+        <dc:Bounds x="670" y="200" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- End Fail -->
+      <bpmndi:BPMNShape id="EndEvent_Fail_di" bpmnElement="EndEvent_Fail">
+        <dc:Bounds x="830" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="806" y="265" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="100" />
+        <di:waypoint x="240" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="100" />
+        <di:waypoint x="400" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="500" y="100" />
+        <di:waypoint x="560" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Success_di" bpmnElement="Flow_Success">
+        <di:waypoint x="610" y="100" />
+        <di:waypoint x="670" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Fail_di" bpmnElement="Flow_Fail">
+        <di:waypoint x="585" y="125" />
+        <di:waypoint x="585" y="240" />
+        <di:waypoint x="670" y="240" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_DB_Email_di" bpmnElement="Flow_DB_Email">
+        <di:waypoint x="770" y="100" />
+        <di:waypoint x="830" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Email_End_di" bpmnElement="Flow_Email_End">
+        <di:waypoint x="930" y="100" />
+        <di:waypoint x="990" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Fail_End_di" bpmnElement="Flow_Fail_End">
+        <di:waypoint x="770" y="240" />
+        <di:waypoint x="830" y="240" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</bpmn2:definitions>

@@ -2,15 +2,23 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import DiagramViewer, { type DiagramViewerHandle } from './components/DiagramViewer'
 import TaskList from './components/TaskList'
 import ExecutionPanel from './components/ExecutionPanel'
+import HistoryPanel from './components/HistoryPanel'
+import VariablesPanel, { type VariablesPanelHandle } from './components/VariablesPanel'
 import { useExecutionStream } from './hooks/useExecutionStream'
 import type { TaskInfo, ExecutionEvent } from './types'
+
+type Tab = 'results' | 'history'
 
 export default function App() {
   const diagramRef = useRef<DiagramViewerHandle>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const varsRef = useRef<VariablesPanelHandle>(null)
   const [xml, setXml] = useState<string | null>(null)
   const [tasks, setTasks] = useState<TaskInfo[]>([])
   const [parseError, setParseError] = useState<string | null>(null)
+  const [tab, setTab] = useState<Tab>('results')
+  const [inputVars, setInputVars] = useState<Record<string, unknown>>({})
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0)
   const { events, running, start, reset } = useExecutionStream()
 
   // Handle SSE events → diagram highlights
@@ -28,6 +36,16 @@ export default function App() {
       diagramRef.current?.highlight(last.elementId, 'ok')
     }
   }, [events])
+
+  // When execution finishes, switch to results tab and bump history refresh
+  const prevRunning = useRef(false)
+  useEffect(() => {
+    if (prevRunning.current && !running) {
+      setTab('results')
+      setHistoryRefreshKey(k => k + 1)
+    }
+    prevRunning.current = running
+  }, [running])
 
   const loadXml = useCallback(async (xmlString: string) => {
     setParseError(null)
@@ -82,8 +100,8 @@ export default function App() {
   const handleExecute = useCallback(async () => {
     if (!xml || running) return
     diagramRef.current?.clearHighlights()
-    await start(xml)
-  }, [xml, running, start])
+    await start(xml, inputVars)
+  }, [xml, running, start, inputVars])
 
   return (
     <div id="root" style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
@@ -137,10 +155,35 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right — task list + results */}
+        {/* Right — task list + variables + tabs */}
         <div className="right-panel">
           <TaskList tasks={tasks} />
-          <ExecutionPanel events={events} running={running} />
+          <VariablesPanel onChange={setInputVars} />
+
+          {/* Tab bar */}
+          <div className="tab-bar">
+            <button
+              className={`tab-btn${tab === 'results' ? ' active' : ''}`}
+              onClick={() => setTab('results')}
+            >
+              Results
+            </button>
+            <button
+              className={`tab-btn${tab === 'history' ? ' active' : ''}`}
+              onClick={() => {
+                setTab('history')
+                setHistoryRefreshKey(k => k + 1)
+              }}
+            >
+              History
+            </button>
+          </div>
+
+          {tab === 'results' ? (
+            <ExecutionPanel events={events} running={running} />
+          ) : (
+            <HistoryPanel refreshKey={historyRefreshKey} />
+          )}
         </div>
       </div>
     </div>

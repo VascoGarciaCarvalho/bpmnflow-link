@@ -4,26 +4,34 @@ import { ExecutionContext } from './context.js'
 import { interpolate } from './interpolate.js'
 import type { TaskResult, ExecutionEvent } from './types.js'
 
+export interface ExecuteOptions {
+  inputVars?: Record<string, unknown>
+}
+
 function getDocConfig(element: any): Record<string, unknown> {
   if (!element.documentation || element.documentation.length === 0) return {}
+  const raw: string = element.documentation[0].text
   try {
-    return JSON.parse(element.documentation[0].text)
-  } catch {
-    return {}
+    return JSON.parse(raw)
+  } catch (e: any) {
+    throw new Error(`Invalid JSON in documentation of task "${element.name ?? element.id}": ${e.message}`)
   }
 }
 
 export async function execute(
   xmlString: string,
-  emit?: (event: ExecutionEvent) => void
-): Promise<TaskResult[]> {
-  const { flowElements } = await parseXML(xmlString)
+  emit?: (event: ExecutionEvent) => void,
+  inputVars: Record<string, unknown> = {}
+): Promise<{ results: TaskResult[]; processName: string }> {
+  const { process, flowElements } = await parseXML(xmlString)
+  const processName: string = process.name || process.id || 'Unknown'
 
   const startEvent = flowElements.find((el: any) => el.$type === 'bpmn:StartEvent')
   if (!startEvent) throw new Error('No StartEvent found in process')
 
   const results: TaskResult[] = []
   const context = new ExecutionContext()
+  context.set('input', inputVars)
   let current: any = startEvent
 
   while (current) {
@@ -94,5 +102,5 @@ export async function execute(
     current = current.outgoing[0].targetRef
   }
 
-  return results
+  return { results, processName }
 }

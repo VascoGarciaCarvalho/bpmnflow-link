@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn2:definitions
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL"
+  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+  id="Definitions_1"
+  targetNamespace="http://bpmn.io/schema/bpmn">
+
+  <bpmn2:process id="Process_1" name="Order Processing Pipeline" isExecutable="true">
+
+    <!-- 1. Start -->
+    <bpmn2:startEvent id="StartEvent_1" name="Order Received">
+      <bpmn2:outgoing>Flow_1</bpmn2:outgoing>
+    </bpmn2:startEvent>
+
+    <bpmn2:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_LogStart" />
+
+    <!-- 2. Log that the process started -->
+    <bpmn2:serviceTask id="Task_LogStart" name="LogToConsole">
+      <bpmn2:documentation>{"message":"Order processing pipeline started."}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_1</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_2</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_2" sourceRef="Task_LogStart" targetRef="Task_API" />
+
+    <!-- 3. Fetch order data from external API -->
+    <bpmn2:serviceTask id="Task_API" name="CallAPI">
+      <bpmn2:documentation>{"url":"https://httpbin.org/json","method":"GET"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_2</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_3</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_3" sourceRef="Task_API" targetRef="Task_DB" />
+
+    <!-- 4. Save order to database — uses API status from context via interpolation -->
+    <bpmn2:serviceTask id="Task_DB" name="UpdateDatabase">
+      <bpmn2:documentation>{"table":"orders","set":{"status":"{{ctx.Task_API.statusText}}","processed_at":"2026-03-04"},"where":{"id":"order_001"}}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_3</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_4</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_4" sourceRef="Task_DB" targetRef="Gateway_Check" />
+
+    <!-- 5. Gateway: was the API call successful? -->
+    <bpmn2:exclusiveGateway id="Gateway_Check" name="API OK?" default="Flow_Fail">
+      <bpmn2:incoming>Flow_4</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_Success</bpmn2:outgoing>
+      <bpmn2:outgoing>Flow_Fail</bpmn2:outgoing>
+    </bpmn2:exclusiveGateway>
+
+    <!-- Success branch -->
+    <bpmn2:sequenceFlow id="Flow_Success" sourceRef="Gateway_Check" targetRef="Task_LogOK">
+      <bpmn2:conditionExpression xsi:type="bpmn2:tFormalExpression">ctx.Task_API.status === 200</bpmn2:conditionExpression>
+    </bpmn2:sequenceFlow>
+
+    <bpmn2:serviceTask id="Task_LogOK" name="LogToConsole">
+      <bpmn2:documentation>{"message":"Order confirmed. API responded with: {{ctx.Task_API.statusText}}"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_Success</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_ToEndOK</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_ToEndOK" sourceRef="Task_LogOK" targetRef="EndEvent_OK" />
+
+    <bpmn2:endEvent id="EndEvent_OK" name="Order Completed">
+      <bpmn2:incoming>Flow_ToEndOK</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+    <!-- Failure branch (default) -->
+    <bpmn2:sequenceFlow id="Flow_Fail" sourceRef="Gateway_Check" targetRef="Task_LogFail" />
+
+    <bpmn2:serviceTask id="Task_LogFail" name="LogToConsole">
+      <bpmn2:documentation>{"message":"Order processing failed. Unexpected API status: {{ctx.Task_API.status}}"}</bpmn2:documentation>
+      <bpmn2:incoming>Flow_Fail</bpmn2:incoming>
+      <bpmn2:outgoing>Flow_ToEndFail</bpmn2:outgoing>
+    </bpmn2:serviceTask>
+
+    <bpmn2:sequenceFlow id="Flow_ToEndFail" sourceRef="Task_LogFail" targetRef="EndEvent_Fail" />
+
+    <bpmn2:endEvent id="EndEvent_Fail" name="Order Failed">
+      <bpmn2:incoming>Flow_ToEndFail</bpmn2:incoming>
+    </bpmn2:endEvent>
+
+  </bpmn2:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+
+      <!-- Start -->
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="130" y="125" width="80" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Log Start -->
+      <bpmndi:BPMNShape id="Task_LogStart_di" bpmnElement="Task_LogStart">
+        <dc:Bounds x="240" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Call API -->
+      <bpmndi:BPMNShape id="Task_API_di" bpmnElement="Task_API">
+        <dc:Bounds x="400" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Update Database -->
+      <bpmndi:BPMNShape id="Task_DB_di" bpmnElement="Task_DB">
+        <dc:Bounds x="560" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- Gateway -->
+      <bpmndi:BPMNShape id="Gateway_Check_di" bpmnElement="Gateway_Check" isMarkerVisible="true">
+        <dc:Bounds x="720" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="722" y="132" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Log OK (success branch) -->
+      <bpmndi:BPMNShape id="Task_LogOK_di" bpmnElement="Task_LogOK">
+        <dc:Bounds x="840" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- End OK -->
+      <bpmndi:BPMNShape id="EndEvent_OK_di" bpmnElement="EndEvent_OK">
+        <dc:Bounds x="1002" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="978" y="125" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Log Fail (failure branch) -->
+      <bpmndi:BPMNShape id="Task_LogFail_di" bpmnElement="Task_LogFail">
+        <dc:Bounds x="840" y="200" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+
+      <!-- End Fail -->
+      <bpmndi:BPMNShape id="EndEvent_Fail_di" bpmnElement="EndEvent_Fail">
+        <dc:Bounds x="1002" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="982" y="265" width="76" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="188" y="100" />
+        <di:waypoint x="240" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="340" y="100" />
+        <di:waypoint x="400" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="500" y="100" />
+        <di:waypoint x="560" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="660" y="100" />
+        <di:waypoint x="720" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Success_di" bpmnElement="Flow_Success">
+        <di:waypoint x="770" y="100" />
+        <di:waypoint x="840" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_Fail_di" bpmnElement="Flow_Fail">
+        <di:waypoint x="745" y="125" />
+        <di:waypoint x="745" y="240" />
+        <di:waypoint x="840" y="240" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ToEndOK_di" bpmnElement="Flow_ToEndOK">
+        <di:waypoint x="940" y="100" />
+        <di:waypoint x="1002" y="100" />
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_ToEndFail_di" bpmnElement="Flow_ToEndFail">
+        <di:waypoint x="940" y="240" />
+        <di:waypoint x="1002" y="240" />
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</bpmn2:definitions>

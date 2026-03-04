@@ -247,6 +247,83 @@ button:disabled {
 
 .btn-secondary:hover:not(:disabled) { background: #374151; }
 
+/* ── Tab bar ── */
+.tab-bar {
+  display: flex;
+  border-bottom: 1px solid #2d3148;
+  background: #1a1d27;
+}
+
+.tab-btn {
+  flex: 1;
+  background: transparent;
+  color: #6b7280;
+  border-radius: 0;
+  padding: 8px 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover:not(:disabled) {
+  color: #e2e8f0;
+  background: transparent;
+}
+
+.tab-btn.active {
+  color: #818cf8;
+  border-bottom-color: #818cf8;
+}
+
+/* ── History list ── */
+.history-list {
+  overflow-y: auto;
+}
+
+.history-item {
+  padding: 8px 14px;
+  border-bottom: 1px solid #1e2130;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.history-item:hover { background: #1a1d27; }
+.history-item:last-child { border-bottom: none; }
+
+.history-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  margin-bottom: 2px;
+}
+
+/* ── Variables panel ── */
+.variables-textarea {
+  width: 100%;
+  min-height: 72px;
+  background: #1a1d27;
+  color: #94a3b8;
+  border: 1px solid #2d3148;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  resize: vertical;
+  outline: none;
+}
+
+.variables-textarea:focus {
+  border-color: #4f46e5;
+}
+
+.variables-error {
+  font-size: 0.72rem;
+  color: #f87171;
+  margin-top: 4px;
+}
+
 /* ── bpmn-js element highlighting ── */
 .element-running .djs-shape .djs-visual > :is(rect, circle, polygon) {
   stroke: #3b82f6 !important;

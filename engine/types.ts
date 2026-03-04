@@ -14,6 +14,16 @@ export interface TaskResult {
   error: string | null
 }
 
+export interface ExecutionRun {
+  id: number
+  timestamp: string
+  processName: string
+  durationMs: number
+  inputVars: Record<string, unknown>
+  results: TaskResult[]
+  hadErrors: boolean
+}
+
 export type ExecutionEventType =
   | 'task-start'
   | 'task-end'
